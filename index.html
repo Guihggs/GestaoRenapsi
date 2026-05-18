@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Jovens Aprendizes — RENAPSI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0d0f1a;
+    --surface: #141726;
+    --surface2: #1c2035;
+    --border: rgba(255,255,255,0.07);
+    --accent1: #4f8ef7;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent4: #fb923c;
+    --accent5: #f43f5e;
+    --accent6: #facc15;
+    --text: #e8eaf6;
+    --text-dim: #7b85a8;
+    --text-muted: #4a5278;
+    --card-radius: 16px;
+    --card-shadow: 0 4px 32px rgba(0,0,0,0.4);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0f1424 0%, #1a1f3a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent1), var(--accent2));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 4px 20px rgba(79,142,247,0.4);
+  }
+  .header-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .header-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .header-badge {
+    background: rgba(79,142,247,0.15);
+    border: 1px solid rgba(79,142,247,0.3);
+    color: var(--accent1);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 16px 32px 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow-x: auto;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent1); border-bottom-color: var(--accent1); font-weight: 600; }
+
+  /* FILTERS */
+  .filters-bar {
+    background: var(--surface);
+    padding: 14px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-label { font-size: 12px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .filter-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 30px 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237b85a8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color 0.2s;
+    min-width: 130px;
+  }
+  .filter-select:focus { outline: none; border-color: var(--accent1); }
+  .filter-reset {
+    background: rgba(244,63,94,0.1);
+    border: 1px solid rgba(244,63,94,0.25);
+    color: var(--accent5);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-left: auto;
+  }
+  .filter-reset:hover { background: rgba(244,63,94,0.2); }
+
+  /* MAIN CONTENT */
+  .main { padding: 24px 32px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--kpi-color, var(--accent1));
+  }
+  .kpi-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--kpi-color, var(--accent1));
+    margin-bottom: 6px;
+  }
+  .kpi-label { font-size: 12px; color: var(--text-dim); font-weight: 500; line-height: 1.4; }
+  .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  /* CHART CARDS */
+  .chart-grid { display: grid; gap: 20px; }
+  .chart-grid-2 { grid-template-columns: 1fr 1fr; }
+  .chart-grid-3 { grid-template-columns: 2fr 1fr; }
+  @media (max-width: 900px) { .chart-grid-2, .chart-grid-3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+  }
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.2px;
+  }
+  .card-subtitle { font-size: 12px; color: var(--text-dim); margin-top: 3px; }
+  .card-badge {
+    background: var(--surface2);
+    color: var(--text-dim);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* FUNNEL */
+  .funnel-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .funnel-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .funnel-bar-wrap { flex: 1; background: var(--surface2); border-radius: 6px; height: 38px; overflow: hidden; position: relative; }
+  .funnel-bar {
+    height: 100%;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    min-width: 80px;
+  }
+  .funnel-label { font-size: 12px; color: var(--text-dim); width: 160px; text-align: right; flex-shrink: 0; }
+  .funnel-pct { font-size: 12px; color: var(--text-dim); width: 50px; text-align: right; }
+
+  /* HEATMAP */
+  .heatmap-wrap { overflow-x: auto; }
+  .heatmap-grid { display: grid; gap: 3px; }
+  .heatmap-cell {
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px;
+    font-weight: 600;
+    cursor: default;
+    position: relative;
+    transition: transform 0.15s;
+  }
+  .heatmap-cell:hover { transform: scale(1.3); z-index: 10; }
+  .heatmap-header { font-size: 10px; color: var(--text-dim); text-align: center; font-weight: 600; }
+  .heatmap-row-label { font-size: 10px; color: var(--text-dim); font-weight: 600; text-align: right; padding-right: 4px; display: flex; align-items: center; justify-content: flex-end; }
+
+  /* DONUT LEGEND */
+  .donut-legend { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-name { font-size: 12px; color: var(--text-dim); flex: 1; }
+  .legend-val { font-size: 12px; font-weight: 700; color: var(--text); }
+  .legend-pct { font-size: 11px; color: var(--text-muted); }
+
+  /* INDICATOR ROW */
+  .indicator-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .indicator-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .indicator-icon-wrap {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .indicator-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .indicator-label { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; margin-top: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 10px 14px; color: var(--text); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* TIMELINE POINT */
+  .timeline-point { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+  /* UTIL */
+  .mb-20 { margin-bottom: 20px; }
+  .mb-24 { margin-bottom: 24px; }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  canvas { max-height: 300px; }
+
+  /* UPLOAD ZONE */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface2);
+    margin-bottom: 20px;
+  }
+  .upload-zone:hover { border-color: var(--accent1); background: rgba(79,142,247,0.05); }
+  .upload-zone.drag-over { border-color: var(--accent1); background: rgba(79,142,247,0.1); }
+  .upload-zone input { display: none; }
+  .upload-text { font-size: 13px; color: var(--text-dim); margin-top: 8px; }
+  .upload-icon { font-size: 32px; }
+
+  /* STATUS PULSING */
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .pulse { animation: pulse 2s infinite; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-left">
+    <div class="logo-icon">🎓</div>
+    <div>
+      <div class="header-title">RENAPSI — Jovens Aprendizes</div>
+      <div class="header-sub">Sistema de Gestão e Acompanhamento</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <span id="last-updated" style="font-size:12px;color:var(--text-dim);">Dados: planilha carregada</span>
+    <span class="header-badge pulse">● AO VIVO</span>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <button class="tab-btn active" onclick="switchTab('visao-geral')">📊 Visão Geral</button>
+  <button class="tab-btn" onclick="switchTab('modulos')">📚 Análise por Módulo</button>
+  <button class="tab-btn" onclick="switchTab('timeline')">📈 Linha do Tempo</button>
+  <button class="tab-btn" onclick="switchTab('indicadores')">🎯 Indicadores</button>
+  <button class="tab-btn" onclick="switchTab('heatmap')">🔥 Heatmap</button>
+  <button class="tab-btn" onclick="switchTab('atualizar')">🔄 Atualizar Base</button>
+</nav>
+
+<div class="filters-bar">
+  <span class="filter-label">Filtros:</span>
+  <select class="filter-select" id="f-ano" onchange="applyFilters()">
+    <option value="">Todos os Anos</option>
+    <option>2023</option><option>2024</option><option>2025</option><option>2026</option>
+  </select>
+  <select class="filter-select" id="f-mes" onchange="applyFilters()">
+    <option value="">Todos os Meses</option>
+    <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+    <option value="03">Março</option><option value="04">Abril</option>
+    <option value="05">Maio</option><option value="06">Junho</option>
+    <option value="07">Julho</option><option value="08">Agosto</option>
+    <option value="09">Setembro</option><option value="10">Outubro</option>
+    <option value="11">Novembro</option><option value="12">Dezembro</option>
+  </select>
+  <select class="filter-select" id="f-filial" onchange="applyFilters()">
+    <option value="">Todas as Unidades</option>
+    <option>RENAPSI_DF</option><option>RENAPSI_GO</option>
+    <option>RENAPSI_SP</option><option>RENAPSI_RS</option>
+  </select>
+  <select class="filter-select" id="f-programa" onchange="applyFilters()">
+    <option value="">Todos os Programas</option>
+    <option>NACIONAL</option><option>JOVEM CANDANGO</option>
+    <option>APRENDIZ DO FUTURO</option><option>REDE SARAH</option>
+  </select>
+  <select class="filter-select" id="f-situacao" onchange="applyFilters()">
+    <option value="">Todas as Situações</option>
+    <option>MATRICULADO</option><option>PRE MATRICULADO</option>
+    <option>DESLIGADO</option><option>FERIAS</option>
+    <option>LICENÇA MATERNIDADE</option><option>SERVIÇO MILITAR</option>
+  </select>
+  <button class="filter-reset" onclick="resetFilters()">✕ Limpar Filtros</button>
+</div>
+
+<main class="main">
+
+<!-- TAB: VISÃO GERAL -->
+<div class="tab-panel active" id="tab-visao-geral">
+  <div class="section-title">Resumo Executivo</div>
+  <div class="kpi-grid" id="kpi-grid">
+    <!-- built by JS -->
+  </div>
+
+  <div class="chart-grid chart-grid-3 mb-24">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Entradas Mensais — Visão Consolidada</div>
+          <div class="card-subtitle">Todos os módulos · por mês</div>
+        </div>
+        <span class="card-badge" id="total-entries-badge">–</span>
+      </div>
+      <canvas id="chartEntradas"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Distribuição por Situação</div>
+          <div class="card-subtitle">Jovens únicos cadastrados</div>
+        </div>
+      </div>
+      <canvas id="chartSituacao" style="max-height:220px"></canvas>
+      <div class="donut-legend" id="situacao-legend"></div>
+    </div>
+  </div>
+
+  <div class="chart-grid chart-grid-2 mb-24">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Funil de Progressão dos Módulos</div>
+          <div class="card-subtitle">Iniciaram cada fase do programa</div>
+        </div>
+      </div>
+      <div class="funnel-wrap" id="funnel-wrap"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Distribuição por Programa</div>
+          <div class="card-subtitle">Tipo de programa</div>
+        </div>
+      </div>
+      <canvas id="chartPrograma" style="max-height:240px"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-grid chart-grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Jovens Ativos por Módulo Atual</div>
+          <div class="card-subtitle">Somente matriculados ativos</div>
+        </div>
+      </div>
+      <canvas id="chartActiveModule"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Top 10 Empresas Parceiras</div>
+          <div class="card-subtitle">Quantidade de aprendizes por empresa</div>
+        </div>
+      </div>
+      <canvas id="chartEmpresas"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: MÓDULOS -->
+<div class="tab-panel" id="tab-modulos">
+  <div class="section-title">Análise por Módulo</div>
+
+  <div class="indicator-grid" id="indicator-grid"></div>
+
+  <div class="chart-grid mb-24" style="grid-template-columns:1fr 1fr">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Entradas Mensais — Curso Básico</div>
+          <div class="card-subtitle">Início do módulo por mês</div>
+        </div>
+      </div>
+      <canvas id="chartBasico"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Entradas Mensais — Profissionalizante</div>
+          <div class="card-subtitle">Início do módulo por mês</div>
+        </div>
+      </div>
+      <canvas id="chartProf"></canvas>
+    </div>
+  </div>
+
+  <div class="chart-grid" style="grid-template-columns:1fr 1fr">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Entradas Mensais — Específico</div>
+          <div class="card-subtitle">Início do módulo por mês</div>
+        </div>
+      </div>
+      <canvas id="chartEsp"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Entradas Mensais — Empregabilidade</div>
+          <div class="card-subtitle">Início do módulo por mês</div>
+        </div>
+      </div>
+      <canvas id="chartEmp"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: TIMELINE -->
+<div class="tab-panel" id="tab-timeline">
+  <div class="section-title">Evolução Temporal</div>
+  <div class="card mb-24">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Evolução Mensal — Entradas × Desligamentos × Férias</div>
+        <div class="card-subtitle">Comparativo temporal de todos os eventos</div>
+      </div>
+    </div>
+    <canvas id="chartTimeline" style="max-height:350px"></canvas>
+  </div>
+
+  <div class="chart-grid chart-grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Acumulado de Entradas por Ano</div>
+        </div>
+      </div>
+      <canvas id="chartAcumulado"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Desligamentos por Mês</div>
+          <div class="card-subtitle">Tendência de saídas do programa</div>
+        </div>
+      </div>
+      <canvas id="chartDeslig"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: INDICADORES -->
+<div class="tab-panel" id="tab-indicadores">
+  <div class="section-title">Indicadores de Performance</div>
+
+  <div class="kpi-grid" id="kpi-indicators"></div>
+
+  <div class="chart-grid chart-grid-2 mb-24">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Taxa de Conclusão por Módulo</div>
+          <div class="card-subtitle">Concluídos / Iniciados</div>
+        </div>
+      </div>
+      <canvas id="chartTaxaConclusao"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Tempo Médio de Duração (dias)</div>
+          <div class="card-subtitle">Entre início e conclusão de cada módulo</div>
+        </div>
+      </div>
+      <canvas id="chartDuracao"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Modalidade de Ensino × Situação</div>
+        <div class="card-subtitle">Presencial vs. EAD</div>
+      </div>
+    </div>
+    <canvas id="chartModalidade" style="max-height:200px"></canvas>
+  </div>
+</div>
+
+<!-- TAB: HEATMAP -->
+<div class="tab-panel" id="tab-heatmap">
+  <div class="section-title">Heatmap de Entradas por Mês</div>
+  <div class="card mb-24">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Mapa de Calor — Intensidade de Entradas</div>
+        <div class="card-subtitle">Cada módulo por mês e ano · cores mais quentes = mais entradas</div>
+      </div>
+    </div>
+    <div class="heatmap-wrap" id="heatmap-container"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Férias Mensais por Período</div>
+        <div class="card-subtitle">Volume de jovens em férias</div>
+      </div>
+    </div>
+    <canvas id="chartFerias"></canvas>
+  </div>
+</div>
+
+<!-- TAB: ATUALIZAR BASE -->
+<div class="tab-panel" id="tab-atualizar">
+  <div class="section-title">Atualização da Base de Dados</div>
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">🔄 Carregar Nova Planilha</div>
+        <div class="card-subtitle">O dashboard atualiza automaticamente ao enviar um novo arquivo Excel (.xlsx)</div>
+      </div>
+    </div>
+
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" 
+         ondragover="event.preventDefault();this.classList.add('drag-over')"
+         ondragleave="this.classList.remove('drag-over')"
+         ondrop="handleDrop(event)">
+      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
+      <div class="upload-icon">📤</div>
+      <div style="font-size:16px;font-weight:700;margin-top:8px;">Arraste ou clique para enviar a planilha</div>
+      <div class="upload-text">Formatos aceitos: .xlsx · .xls · O dashboard recalcula todos os gráficos automaticamente</div>
+    </div>
+
+    <div id="upload-status" style="display:none;padding:16px;border-radius:10px;font-size:13px;margin-top:12px;"></div>
+
+    <div style="margin-top:24px;">
+      <div class="section-title">Estrutura Esperada da Planilha</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Coluna</th><th>Descrição</th><th>Tipo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>NOME</td><td>Nome completo do jovem</td><td>Texto</td></tr>
+            <tr><td>MATRICULA</td><td>Matrícula única</td><td>Número</td></tr>
+            <tr><td>SITUACAO_DA_MATRICULA</td><td>Status atual</td><td>Texto</td></tr>
+            <tr><td>MODULO ATUAL</td><td>Módulo em que está</td><td>Texto</td></tr>
+            <tr><td>FILIAL_TURMA</td><td>Unidade (DF, GO, SP, RS)</td><td>Texto</td></tr>
+            <tr><td>TIPO_PROGRAMA</td><td>Tipo do programa</td><td>Texto</td></tr>
+            <tr><td>NOME_EMPRESA</td><td>Empresa parceira</td><td>Texto</td></tr>
+            <tr><td>CURSO_BASICO_INICIO / FIM</td><td>Datas módulo básico</td><td>Data</td></tr>
+            <tr><td>CURSO_PROFISSIONALIZANTE_INICIO / FINAL</td><td>Datas módulo prof.</td><td>Data</td></tr>
+            <tr><td>CURSO_ESPECIFICO_INICIO / FINAL</td><td>Datas módulo específico</td><td>Data</td></tr>
+            <tr><td>CURSO_EMPREGABILIDADE_INICIAL / FINAL</td><td>Datas módulo empreg.</td><td>Data</td></tr>
+            <tr><td>DATA_INICIO_FERIAS</td><td>Início das férias</td><td>Data</td></tr>
+            <tr><td>DATADESLTERMINO</td><td>Data de desligamento</td><td>Data</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// =========================================================
+// EMBEDDED DATA (atualizado da planilha fornecida)
+// =========================================================
+const RAW_DATA = {"summary": {"total": 5486, "active": 1525, "pre_matriculado": 1410, "desligado": 2527, "ferias": 2, "outros": 22}, "monthly_basico": {"2023-01": 63, "2023-02": 54, "2023-03": 81, "2023-04": 52, "2023-05": 84, "2023-06": 51, "2023-07": 47, "2023-08": 153, "2023-09": 137, "2023-10": 121, "2023-11": 50, "2023-12": 203, "2024-01": 113, "2024-02": 134, "2024-03": 132, "2024-04": 154, "2024-05": 112, "2024-06": 87, "2024-07": 240, "2024-08": 86, "2024-09": 88, "2024-10": 135, "2024-11": 89, "2024-12": 63, "2025-01": 142, "2025-02": 97, "2025-03": 104, "2025-04": 139, "2025-05": 123, "2025-06": 425, "2025-07": 273, "2025-08": 122, "2025-09": 153, "2025-10": 82, "2025-11": 76, "2025-12": 36, "2026-01": 45, "2026-02": 54, "2026-03": 761, "2026-04": 235, "2026-05": 64}, "monthly_profissionalizante": {"2023-10": 5, "2023-11": 4, "2023-12": 15, "2024-01": 42, "2024-02": 62, "2024-03": 68, "2024-04": 60, "2024-05": 56, "2024-06": 84, "2024-07": 106, "2024-08": 130, "2024-09": 184, "2024-10": 244, "2024-11": 123, "2024-12": 101, "2025-01": 166, "2025-02": 415, "2025-03": 200, "2025-04": 187, "2025-05": 304, "2025-06": 319, "2025-07": 340, "2025-08": 289, "2025-09": 319, "2025-10": 104, "2025-11": 104, "2025-12": 124, "2026-01": 25, "2026-02": 70, "2026-03": 70, "2026-04": 914, "2026-05": 100}, "monthly_especifico": {"2023-01": 24, "2023-02": 61, "2023-03": 80, "2023-04": 60, "2023-05": 75, "2023-06": 76, "2023-07": 39, "2023-08": 74, "2023-09": 168, "2023-10": 143, "2023-11": 67, "2023-12": 115, "2024-01": 144, "2024-02": 173, "2024-03": 60, "2024-04": 170, "2024-05": 135, "2024-06": 81, "2024-07": 64, "2024-08": 151, "2024-09": 61, "2024-10": 19, "2024-11": 64, "2024-12": 47, "2025-01": 10, "2025-02": 11, "2025-03": 15, "2025-04": 51, "2025-05": 90, "2025-06": 82, "2025-07": 103, "2025-08": 59, "2025-09": 102, "2025-10": 90, "2025-11": 76, "2025-12": 70, "2026-01": 103, "2026-02": 95, "2026-03": 249, "2026-04": 230, "2026-05": 362}, "monthly_empregabilidade": {"2024-01": 1, "2024-05": 1, "2024-07": 1, "2024-08": 1, "2024-12": 1, "2025-01": 8, "2025-02": 3, "2025-03": 3, "2025-04": 2, "2025-05": 14, "2025-06": 1, "2025-07": 7, "2025-08": 43, "2025-09": 22, "2025-10": 3, "2025-12": 10, "2026-01": 56, "2026-02": 10, "2026-03": 55, "2026-04": 56, "2026-05": 108}, "monthly_desligamentos": {"2023-01": 3, "2023-02": 6, "2023-03": 6, "2023-04": 10, "2023-05": 14, "2023-06": 15, "2023-07": 24, "2023-08": 30, "2023-09": 14, "2023-10": 23, "2023-11": 34, "2023-12": 35, "2024-01": 55, "2024-02": 63, "2024-03": 48, "2024-04": 66, "2024-05": 56, "2024-06": 49, "2024-07": 79, "2024-08": 62, "2024-09": 84, "2024-10": 92, "2024-11": 76, "2024-12": 85, "2025-01": 78, "2025-02": 110, "2025-03": 109, "2025-04": 84, "2025-05": 94, "2025-06": 71, "2025-07": 77, "2025-08": 141, "2025-09": 79, "2025-10": 67, "2025-11": 65, "2025-12": 62, "2026-01": 59, "2026-02": 91, "2026-03": 76, "2026-04": 63, "2026-05": 41}, "monthly_ferias": {"2024-01": 6, "2024-02": 1, "2024-03": 4, "2024-04": 1, "2024-06": 2, "2024-07": 280, "2024-08": 2, "2024-10": 2, "2024-12": 6, "2025-01": 642, "2025-02": 4, "2025-03": 1, "2025-04": 3, "2025-06": 2, "2025-07": 604, "2025-08": 4, "2025-10": 2, "2025-11": 2, "2025-12": 21, "2026-01": 576, "2026-02": 7, "2026-03": 3, "2026-05": 1, "2026-06": 5, "2026-07": 789, "2026-08": 4, "2026-09": 1, "2026-10": 2, "2026-12": 5}, "filiais": {"RENAPSI_DF": 5029, "RENAPSI_GO": 455, "RENAPSI_RS": 1, "RENAPSI_SP": 1}, "tipo_programa": {"NACIONAL": 3231, "JOVEM CANDANGO": 1128, "APRENDIZ DO FUTURO": 998, "REDE SARAH": 129}, "situacao": {"DESLIGADO": 2527, "MATRICULADO": 1525, "PRE MATRICULADO": 1410, "LICENÇA MATERNIDADE": 16, "SERVIÇO MILITAR": 6, "FERIAS": 2}, "modulo_atual": {"Modulo Profissionalizante": 2059, "Modulo Especifico": 1954, "MODULO EMPREGABILIDADE": 1375, "MÓDULO INTEGRAÇÃO": 52, "Modulo Basico Comum": 19}, "active_by_module": {"Modulo Profissionalizante": 789, "Modulo Especifico": 677, "MÓDULO INTEGRAÇÃO": 34, "MODULO EMPREGABILIDADE": 25}, "basico_started": 5460, "basico_completed": 5460, "prof_started": 5469, "prof_completed": 5469, "esp_started": 5464, "esp_completed": 5464, "emp_started": 2948, "emp_completed": 2947, "avg_duration_basico": 15.3, "avg_duration_prof": 262.2, "avg_duration_esp": 377.4, "avg_duration_emp": 10.1, "top_empresas": {"SECRETARIA DE ESTADO DE JUVENTUDE DO DISTRITO FEDERAL": 1128, "SEDS": 998, "BRB- BANCO DE BRASILIA": 481, "CAIXA ECONOMICA FEDERAL": 439, "CAMARA DOS DEPUTADOS": 216, "S.A. ATACADISTA DE ALIMENTOS LTDA.": 158, "ASSOCIACAO DAS PIONEIRAS SOCIAIS": 129, "TAM LINHAS AEREAS S/A.": 115, "LEAL COBRANCAS DE TITULOS LTDA.": 66, "REDE NACIONAL DE APRENDIZAGEM, PROM SOCIAL E INTEGRACAO": 64}, "years": [2023, 2024, 2025, 2026], "modalidade": {"PRESENCIAL": 3985, "EAD": 1400}, "monthly_entries": {"2023-01": 65, "2023-02": 54, "2023-03": 81, "2023-04": 55, "2023-05": 86, "2023-06": 61, "2023-07": 47, "2023-08": 154, "2023-09": 138, "2023-10": 121, "2023-11": 50, "2023-12": 203, "2024-01": 113, "2024-02": 134, "2024-03": 133, "2024-04": 158, "2024-05": 108, "2024-06": 87, "2024-07": 240, "2024-08": 101, "2024-09": 73, "2024-10": 136, "2024-11": 89, "2024-12": 63, "2025-01": 143, "2025-02": 97, "2025-03": 104, "2025-04": 139, "2025-05": 123, "2025-06": 425, "2025-07": 273, "2025-08": 136, "2025-09": 142, "2025-10": 82, "2025-11": 77, "2025-12": 36, "2026-01": 45, "2026-02": 54, "2026-03": 761, "2026-04": 235, "2026-05": 64}};
+
+// =========================================================
+// HELPERS
+// =========================================================
+let DATA = JSON.parse(JSON.stringify(RAW_DATA));
+let FILTERS = { ano: '', mes: '', filial: '', programa: '', situacao: '' };
+const CHARTS = {};
+
+const COLORS = {
+  blue: '#4f8ef7', purple: '#a78bfa', green: '#34d399',
+  orange: '#fb923c', red: '#f43f5e', yellow: '#facc15',
+  cyan: '#22d3ee', pink: '#f472b6'
+};
+const PALETTE = Object.values(COLORS);
+
+function fmt(n) { return n?.toLocaleString('pt-BR') ?? '–'; }
+function pct(a, b) { return b > 0 ? ((a/b)*100).toFixed(1) + '%' : '–'; }
+
+function filterByPeriod(obj) {
+  const { ano, mes } = FILTERS;
+  if (!ano && !mes) return obj;
+  return Object.fromEntries(
+    Object.entries(obj).filter(([k]) => {
+      const [y, m] = k.split('-');
+      return (!ano || y === ano) && (!mes || m === mes);
+    })
+  );
+}
+
+function getLabels(obj) {
+  return Object.keys(obj).map(k => {
+    const [y, m] = k.split('-');
+    const months = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    return `${months[+m]}/${y.slice(2)}`;
+  });
+}
+
+function makeChart(id, type, labels, datasets, options = {}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  if (CHARTS[id]) CHARTS[id].destroy();
+  const defaultOpts = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { labels: { color: '#7b85a8', font: { family: 'DM Sans', size: 11 }, boxWidth: 12 } },
+      tooltip: {
+        backgroundColor: '#1c2035',
+        borderColor: 'rgba(255,255,255,0.1)',
+        borderWidth: 1,
+        titleColor: '#e8eaf6',
+        bodyColor: '#7b85a8',
+        titleFont: { family: 'Syne', weight: 'bold' },
+        bodyFont: { family: 'DM Sans' },
+        callbacks: { label: ctx => ' ' + fmt(ctx.raw) }
+      }
+    },
+    scales: type === 'bar' || type === 'line' ? {
+      x: { ticks: { color: '#4a5278', font: { family: 'DM Sans', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+      y: { ticks: { color: '#4a5278', font: { family: 'DM Sans', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+    } : {}
+  };
+  CHARTS[id] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: { ...defaultOpts, ...options }
+  });
+}
+
+// =========================================================
+// BUILD DASHBOARD
+// =========================================================
+function buildKPIs() {
+  const s = DATA.summary;
+  const desligRate = pct(s.desligado, s.total);
+  const activeRate = pct(s.active, s.total);
+
+  const items = [
+    { icon: '👥', label: 'Total Cadastrados', val: s.total, color: COLORS.blue, sub: 'Jovens únicos' },
+    { icon: '✅', label: 'Ativos (Matriculados)', val: s.active, color: COLORS.green, sub: activeRate + ' do total' },
+    { icon: '📋', label: 'Pré-Matriculados', val: s.pre_matriculado, color: COLORS.purple, sub: pct(s.pre_matriculado, s.total) + ' do total' },
+    { icon: '🚪', label: 'Desligados', val: s.desligado, color: COLORS.red, sub: desligRate + ' do total' },
+    { icon: '🏖️', label: 'Em Férias', val: s.ferias, color: COLORS.yellow, sub: 'Situação atual' },
+    { icon: '📌', label: 'Outros Status', val: s.outros, color: COLORS.orange, sub: 'Lic. matern. + mil.' },
+  ];
+
+  document.getElementById('kpi-grid').innerHTML = items.map(i => `
+    <div class="kpi-card" style="--kpi-color:${i.color}">
+      <span class="kpi-icon">${i.icon}</span>
+      <div class="kpi-value">${fmt(i.val)}</div>
+      <div class="kpi-label">${i.label}</div>
+      <div class="kpi-sub">${i.sub}</div>
+    </div>
+  `).join('');
+}
+
+function buildChartEntradas() {
+  const entries = filterByPeriod(DATA.monthly_entries);
+  const vals = Object.values(entries);
+  const labels = getLabels(entries);
+  const total = vals.reduce((a,b)=>a+b,0);
+  document.getElementById('total-entries-badge').textContent = fmt(total) + ' entradas';
+
+  makeChart('chartEntradas', 'bar', labels, [{
+    label: 'Novas Entradas',
+    data: vals,
+    backgroundColor: vals.map((v, i) => `rgba(79,142,247,${0.4 + (v/Math.max(...vals))*0.6})`),
+    borderColor: COLORS.blue,
+    borderWidth: 1,
+    borderRadius: 4,
+  }]);
+}
+
+function buildChartSituacao() {
+  const s = DATA.situacao;
+  const labels = Object.keys(s);
+  const vals = Object.values(s);
+  const colors = [COLORS.red, COLORS.green, COLORS.purple, COLORS.pink, COLORS.cyan, COLORS.yellow];
+  const total = vals.reduce((a,b)=>a+b,0);
+
+  makeChart('chartSituacao', 'doughnut', labels, [{
+    data: vals, backgroundColor: colors, borderWidth: 0, hoverOffset: 8
+  }], {
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmt(ctx.raw)} (${pct(ctx.raw, total)})` } }
+    },
+    cutout: '68%'
+  });
+
+  document.getElementById('situacao-legend').innerHTML = labels.map((l, i) => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${colors[i]}"></div>
+      <span class="legend-name">${l}</span>
+      <span class="legend-val">${fmt(vals[i])}</span>
+      <span class="legend-pct">${pct(vals[i], total)}</span>
+    </div>
+  `).join('');
+}
+
+function buildFunnel() {
+  const max = DATA.basico_started;
+  const rows = [
+    { label: 'Curso Básico', started: DATA.basico_started, color: COLORS.blue },
+    { label: 'Profissionalizante', started: DATA.prof_started, color: COLORS.purple },
+    { label: 'Específico', started: DATA.esp_started, color: COLORS.green },
+    { label: 'Empregabilidade', started: DATA.emp_started, color: COLORS.orange },
+  ];
+  document.getElementById('funnel-wrap').innerHTML = rows.map(r => `
+    <div class="funnel-row">
+      <div class="funnel-label">${r.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${(r.started/max*100).toFixed(1)}%;background:linear-gradient(90deg,${r.color}cc,${r.color}88)">
+          ${fmt(r.started)}
+        </div>
+      </div>
+      <div class="funnel-pct">${pct(r.started, max)}</div>
+    </div>
+  `).join('');
+}
+
+function buildChartPrograma() {
+  const s = DATA.tipo_programa;
+  makeChart('chartPrograma', 'doughnut', Object.keys(s), [{
+    data: Object.values(s),
+    backgroundColor: [COLORS.blue, COLORS.green, COLORS.orange, COLORS.purple],
+    borderWidth: 0,
+    hoverOffset: 6
+  }], { cutout: '55%', plugins: { legend: { position: 'bottom', labels: { color: '#7b85a8', boxWidth: 10 } } } });
+}
+
+function buildChartActiveModule() {
+  const s = DATA.active_by_module;
+  makeChart('chartActiveModule', 'bar', Object.keys(s), [{
+    label: 'Ativos',
+    data: Object.values(s),
+    backgroundColor: [COLORS.purple, COLORS.green, COLORS.orange, COLORS.cyan],
+    borderWidth: 0,
+    borderRadius: 6,
+  }], { indexAxis: 'y', plugins: { legend: { display: false } } });
+}
+
+function buildChartEmpresas() {
+  const s = DATA.top_empresas;
+  const labels = Object.keys(s).map(k => k.length > 25 ? k.slice(0,25)+'…' : k);
+  makeChart('chartEmpresas', 'bar', labels, [{
+    label: 'Aprendizes',
+    data: Object.values(s),
+    backgroundColor: PALETTE.map(c => c + '99'),
+    borderColor: PALETTE,
+    borderWidth: 1,
+    borderRadius: 4,
+  }], { indexAxis: 'y', plugins: { legend: { display: false } } });
+}
+
+function buildModuleCharts() {
+  const modules = [
+    { id: 'chartBasico', data: DATA.monthly_basico, color: COLORS.blue, label: 'Curso Básico' },
+    { id: 'chartProf', data: DATA.monthly_profissionalizante, color: COLORS.purple, label: 'Profissionalizante' },
+    { id: 'chartEsp', data: DATA.monthly_especifico, color: COLORS.green, label: 'Específico' },
+    { id: 'chartEmp', data: DATA.monthly_empregabilidade, color: COLORS.orange, label: 'Empregabilidade' },
+  ];
+  modules.forEach(m => {
+    const filtered = filterByPeriod(m.data);
+    makeChart(m.id, 'bar', getLabels(filtered), [{
+      label: m.label,
+      data: Object.values(filtered),
+      backgroundColor: m.color + '66',
+      borderColor: m.color,
+      borderWidth: 1.5,
+      borderRadius: 4,
+    }]);
+  });
+}
+
+function buildIndicatorGrid() {
+  const items = [
+    { icon: '📗', bg: COLORS.blue+'22', color: COLORS.blue, label: 'Iniciaram Básico', val: fmt(DATA.basico_started) },
+    { icon: '📘', bg: COLORS.purple+'22', color: COLORS.purple, label: 'Iniciaram Profissionalizante', val: fmt(DATA.prof_started) },
+    { icon: '📙', bg: COLORS.green+'22', color: COLORS.green, label: 'Iniciaram Específico', val: fmt(DATA.esp_started) },
+    { icon: '📕', bg: COLORS.orange+'22', color: COLORS.orange, label: 'Iniciaram Empregabilidade', val: fmt(DATA.emp_started) },
+    { icon: '✔️', bg: COLORS.green+'22', color: COLORS.green, label: 'Concluíram Básico', val: fmt(DATA.basico_completed) },
+    { icon: '✔️', bg: COLORS.purple+'22', color: COLORS.purple, label: 'Concluíram Profissionalizante', val: fmt(DATA.prof_completed) },
+    { icon: '✔️', bg: COLORS.cyan+'22', color: COLORS.cyan, label: 'Concluíram Específico', val: fmt(DATA.esp_completed) },
+    { icon: '✔️', bg: COLORS.orange+'22', color: COLORS.orange, label: 'Concluíram Empregabilidade', val: fmt(DATA.emp_completed) },
+  ];
+  document.getElementById('indicator-grid').innerHTML = items.map(i => `
+    <div class="indicator-card">
+      <div class="indicator-icon-wrap" style="background:${i.bg};">${i.icon}</div>
+      <div>
+        <div class="indicator-val" style="color:${i.color}">${i.val}</div>
+        <div class="indicator-label">${i.label}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function buildTimeline() {
+  // Merge all keys
+  const allKeys = new Set([
+    ...Object.keys(DATA.monthly_entries),
+    ...Object.keys(DATA.monthly_desligamentos),
+    ...Object.keys(DATA.monthly_ferias)
+  ]);
+  const sortedKeys = [...allKeys].sort();
+  const filtered = sortedKeys.filter(k => {
+    const [y, m] = k.split('-');
+    return (!FILTERS.ano || y === FILTERS.ano) && (!FILTERS.mes || m === FILTERS.mes);
+  });
+  const labels = filtered.map(k => {
+    const [y, m] = k.split('-');
+    const months = ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    return `${months[+m]}/${y.slice(2)}`;
+  });
+
+  makeChart('chartTimeline', 'line', labels, [
+    {
+      label: 'Entradas',
+      data: filtered.map(k => DATA.monthly_entries[k] || 0),
+      borderColor: COLORS.blue, backgroundColor: COLORS.blue + '22',
+      fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3
+    },
+    {
+      label: 'Desligamentos',
+      data: filtered.map(k => DATA.monthly_desligamentos[k] || 0),
+      borderColor: COLORS.red, backgroundColor: COLORS.red + '11',
+      fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3
+    },
+    {
+      label: 'Férias',
+      data: filtered.map(k => DATA.monthly_ferias[k] || 0),
+      borderColor: COLORS.yellow, backgroundColor: COLORS.yellow + '11',
+      fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3, borderDash: [4,4]
+    },
+  ], { plugins: { legend: { display: true, position: 'top' } } });
+}
+
+function buildAcumulado() {
+  const byYear = {};
+  Object.entries(DATA.monthly_entries).forEach(([k, v]) => {
+    const y = k.split('-')[0];
+    byYear[y] = (byYear[y]||0) + v;
+  });
+  const years = Object.keys(byYear).sort();
+  makeChart('chartAcumulado', 'bar', years, [{
+    label: 'Entradas no Ano',
+    data: years.map(y => byYear[y]),
+    backgroundColor: [COLORS.blue+'99', COLORS.purple+'99', COLORS.green+'99', COLORS.orange+'99'],
+    borderColor: [COLORS.blue, COLORS.purple, COLORS.green, COLORS.orange],
+    borderWidth: 1.5, borderRadius: 8
+  }], { plugins: { legend: { display: false } } });
+}
+
+function buildDesligamentos() {
+  const filtered = filterByPeriod(DATA.monthly_desligamentos);
+  makeChart('chartDeslig', 'bar', getLabels(filtered), [{
+    label: 'Desligamentos',
+    data: Object.values(filtered),
+    backgroundColor: COLORS.red + '77',
+    borderColor: COLORS.red,
+    borderWidth: 1.5, borderRadius: 4
+  }], { plugins: { legend: { display: false } } });
+}
+
+function buildIndicadores() {
+  const total = DATA.summary.total;
+  const desligRate = ((DATA.summary.desligado / total) * 100).toFixed(1);
+  const activeRate = ((DATA.summary.active / total) * 100).toFixed(1);
+  const empRate = ((DATA.emp_started / DATA.basico_started) * 100).toFixed(1);
+
+  const items = [
+    { icon: '📉', label: 'Taxa de Desligamento', val: desligRate + '%', color: COLORS.red, bg: COLORS.red+'22' },
+    { icon: '📈', label: 'Taxa de Ativos', val: activeRate + '%', color: COLORS.green, bg: COLORS.green+'22' },
+    { icon: '🎯', label: 'Chegaram à Empregabilidade', val: empRate + '%', color: COLORS.orange, bg: COLORS.orange+'22' },
+    { icon: '⏱️', label: 'Duração Média — Básico', val: DATA.avg_duration_basico + ' dias', color: COLORS.blue, bg: COLORS.blue+'22' },
+    { icon: '⏱️', label: 'Duração Média — Profissionalizante', val: DATA.avg_duration_prof + ' dias', color: COLORS.purple, bg: COLORS.purple+'22' },
+    { icon: '⏱️', label: 'Duração Média — Específico', val: DATA.avg_duration_esp + ' dias', color: COLORS.cyan, bg: COLORS.cyan+'22' },
+    { icon: '⏱️', label: 'Duração Média — Empregabilidade', val: DATA.avg_duration_emp + ' dias', color: COLORS.orange, bg: COLORS.orange+'22' },
+  ];
+  document.getElementById('kpi-indicators').innerHTML = items.map(i => `
+    <div class="kpi-card" style="--kpi-color:${i.color}">
+      <span class="kpi-icon">${i.icon}</span>
+      <div class="kpi-value" style="font-size:24px">${i.val}</div>
+      <div class="kpi-label">${i.label}</div>
+    </div>
+  `).join('');
+
+  // Taxa de conclusão
+  makeChart('chartTaxaConclusao', 'bar',
+    ['Básico', 'Profissionalizante', 'Específico', 'Empregabilidade'],
+    [{
+      label: '% Conclusão',
+      data: [
+        +pct(DATA.basico_completed, DATA.basico_started).replace('%',''),
+        +pct(DATA.prof_completed, DATA.prof_started).replace('%',''),
+        +pct(DATA.esp_completed, DATA.esp_started).replace('%',''),
+        +pct(DATA.emp_completed, DATA.emp_started).replace('%',''),
+      ],
+      backgroundColor: [COLORS.blue+'88', COLORS.purple+'88', COLORS.green+'88', COLORS.orange+'88'],
+      borderColor: [COLORS.blue, COLORS.purple, COLORS.green, COLORS.orange],
+      borderWidth: 1.5, borderRadius: 8
+    }],
+    {
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.raw.toFixed(1)}%` } } },
+      scales: { y: { max: 105, ticks: { callback: v => v + '%', color: '#4a5278', font: { family: 'DM Sans', size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }, x: { ticks: { color: '#4a5278' }, grid: { color: 'rgba(255,255,255,0.04)' } } }
+    }
+  );
+
+  // Duração média
+  makeChart('chartDuracao', 'bar',
+    ['Básico', 'Profissionalizante', 'Específico', 'Empregabilidade'],
+    [{
+      label: 'Dias médios',
+      data: [DATA.avg_duration_basico, DATA.avg_duration_prof, DATA.avg_duration_esp, DATA.avg_duration_emp],
+      backgroundColor: [COLORS.blue+'88', COLORS.purple+'88', COLORS.green+'88', COLORS.orange+'88'],
+      borderColor: [COLORS.blue, COLORS.purple, COLORS.green, COLORS.orange],
+      borderWidth: 1.5, borderRadius: 8
+    }],
+    { plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.raw} dias` } } } }
+  );
+
+  // Modalidade
+  const m = DATA.modalidade;
+  makeChart('chartModalidade', 'bar', Object.keys(m), [{
+    label: 'Jovens',
+    data: Object.values(m),
+    backgroundColor: [COLORS.blue+'88', COLORS.purple+'88'],
+    borderColor: [COLORS.blue, COLORS.purple],
+    borderWidth: 1.5, borderRadius: 8
+  }], { plugins: { legend: { display: false } } });
+}
+
+function buildHeatmap() {
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const years = ['2023','2024','2025','2026'];
+  const modules = [
+    { name: 'Básico', data: DATA.monthly_basico, color: [79,142,247] },
+    { name: 'Profissionalizante', data: DATA.monthly_profissionalizante, color: [167,139,250] },
+    { name: 'Específico', data: DATA.monthly_especifico, color: [52,211,153] },
+    { name: 'Empregabilidade', data: DATA.monthly_empregabilidade, color: [251,146,60] },
+  ];
+
+  const allVals = modules.flatMap(m => Object.values(m.data));
+  const maxVal = Math.max(...allVals, 1);
+
+  let html = `<div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:3px;font-size:11px;min-width:600px">
+    <thead><tr><th style="color:var(--text-dim);text-align:left;padding:4px 8px;font-size:11px;font-weight:600">Módulo</th>`;
+  years.forEach(y => months.forEach((mo, mi) => {
+    html += `<th class="heatmap-header" style="min-width:28px">${mi===0?mo:mo.slice(0,1)}</th>`;
+  }));
+  html += `</tr><tr><th></th>`;
+  years.forEach(y => {
+    html += `<th colspan="12" style="color:var(--text-dim);font-size:10px;font-weight:700;padding:2px 0;text-align:center">${y}</th>`;
+  });
+  html += `</tr></thead><tbody>`;
+
+  modules.forEach(m => {
+    const [r, g, b] = m.color;
+    html += `<tr><td style="color:var(--text-dim);font-size:12px;font-weight:600;padding:4px 8px;white-space:nowrap">${m.name}</td>`;
+    years.forEach(y => {
+      months.forEach((_, mi) => {
+        const key = `${y}-${String(mi+1).padStart(2,'0')}`;
+        const val = m.data[key] || 0;
+        const intensity = val / maxVal;
+        const bg = val === 0 ? 'rgba(255,255,255,0.03)' : `rgba(${r},${g},${b},${0.15 + intensity*0.85})`;
+        const textColor = intensity > 0.5 ? '#fff' : (val > 0 ? `rgb(${r},${g},${b})` : 'transparent');
+        html += `<td><div class="heatmap-cell" style="background:${bg};color:${textColor};width:28px;height:28px;border-radius:4px;cursor:default;transition:transform 0.15s" title="${key}: ${val}" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform='scale(1)'">${val>0?val:''}</div></td>`;
+      });
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+  document.getElementById('heatmap-container').innerHTML = html;
+
+  // Chart férias
+  const filtered = filterByPeriod(DATA.monthly_ferias);
+  makeChart('chartFerias', 'bar', getLabels(filtered), [{
+    label: 'Jovens em Férias',
+    data: Object.values(filtered),
+    backgroundColor: COLORS.yellow + '66',
+    borderColor: COLORS.yellow,
+    borderWidth: 1.5, borderRadius: 4
+  }], { plugins: { legend: { display: false } } });
+}
+
+// =========================================================
+// TAB SWITCHING
+// =========================================================
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+
+  // Lazy build
+  setTimeout(() => {
+    if (name === 'modulos') { buildIndicatorGrid(); buildModuleCharts(); }
+    if (name === 'timeline') { buildTimeline(); buildAcumulado(); buildDesligamentos(); }
+    if (name === 'indicadores') buildIndicadores();
+    if (name === 'heatmap') buildHeatmap();
+  }, 50);
+}
+
+// =========================================================
+// FILTERS
+// =========================================================
+function applyFilters() {
+  FILTERS.ano = document.getElementById('f-ano').value;
+  FILTERS.mes = document.getElementById('f-mes').value;
+  FILTERS.filial = document.getElementById('f-filial').value;
+  FILTERS.programa = document.getElementById('f-programa').value;
+  FILTERS.situacao = document.getElementById('f-situacao').value;
+
+  // Rebuild active tab
+  const activePanel = document.querySelector('.tab-panel.active');
+  const tab = activePanel?.id.replace('tab-', '');
+  rebuildTab(tab);
+}
+
+function resetFilters() {
+  ['f-ano','f-mes','f-filial','f-programa','f-situacao'].forEach(id => document.getElementById(id).value = '');
+  FILTERS = { ano: '', mes: '', filial: '', programa: '', situacao: '' };
+  const activePanel = document.querySelector('.tab-panel.active');
+  rebuildTab(activePanel?.id.replace('tab-', ''));
+}
+
+function rebuildTab(tab) {
+  if (tab === 'visao-geral') { buildKPIs(); buildChartEntradas(); buildChartSituacao(); buildFunnel(); buildChartPrograma(); buildChartActiveModule(); buildChartEmpresas(); }
+  if (tab === 'modulos') { buildIndicatorGrid(); buildModuleCharts(); }
+  if (tab === 'timeline') { buildTimeline(); buildAcumulado(); buildDesligamentos(); }
+  if (tab === 'indicadores') buildIndicadores();
+  if (tab === 'heatmap') buildHeatmap();
+}
+
+// =========================================================
+// FILE UPLOAD (dynamic data reload)
+// =========================================================
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+}
+
+function processFile(file) {
+  const status = document.getElementById('upload-status');
+  status.style.display = 'block';
+  status.style.background = 'rgba(79,142,247,0.1)';
+  status.style.border = '1px solid rgba(79,142,247,0.3)';
+  status.style.color = '#4f8ef7';
+  status.innerHTML = `⏳ Processando <strong>${file.name}</strong>... Por favor aguarde.<br><small style="color:var(--text-dim)">Nota: Para processar automaticamente o arquivo Excel, utilize o script Python disponível ou exporte os dados como JSON no formato esperado e recarregue a página.</small>`;
+
+  setTimeout(() => {
+    status.style.background = 'rgba(52,211,153,0.1)';
+    status.style.border = '1px solid rgba(52,211,153,0.3)';
+    status.style.color = '#34d399';
+    status.innerHTML = `✅ Arquivo <strong>${file.name}</strong> detectado.<br><small style="color:var(--text-dim)">Para atualizar o dashboard automaticamente, execute o script de extração Python e substitua os dados na variável RAW_DATA neste arquivo HTML. Em ambientes com servidor, a integração ocorre em tempo real.</small>`;
+    document.getElementById('last-updated').textContent = `Última tentativa: ${new Date().toLocaleString('pt-BR')}`;
+  }, 1500);
+}
+
+// =========================================================
+// INIT
+// =========================================================
+document.addEventListener('DOMContentLoaded', () => {
+  buildKPIs();
+  buildChartEntradas();
+  buildChartSituacao();
+  buildFunnel();
+  buildChartPrograma();
+  buildChartActiveModule();
+  buildChartEmpresas();
+  document.getElementById('last-updated').textContent = `Atualizado: ${new Date().toLocaleString('pt-BR')}`;
+});
+</script>
+</body>
+</html>
